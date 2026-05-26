@@ -1,7 +1,0 @@
-name = "SaleSight"
-uuid = "a4e5f123-9c1d-4e8b-a7cf-1234567890ab"
-version = "0.1.0"
-authors = ["Josue Ribero Duarte", "Stiven Posada Casadiego"]
-
-[compat]
-julia = "1.9"

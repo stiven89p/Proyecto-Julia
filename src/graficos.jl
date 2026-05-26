@@ -25,14 +25,17 @@ function ejecutar_graficacion(df::DataFrame)
     # 1. Ventas totales por categoría
     col_cat = "Product" in names(df) ? "Product" : "Product_Category"
     if col_cat in names(df) && "Total_Amount" in names(df)
-        ventas_cat = combine(groupby(df, col_cat), :Total_Amount => sum => :Total)
-        sort!(ventas_cat, :Total)
+        df_cat = dropmissing(df[!, [col_cat, "Total_Amount"]])
+        ventas_cat = combine(groupby(df_cat, col_cat), :Total_Amount => sum => :Total)
+        sort!(ventas_cat, :Total, rev=true)
+        etiq = string.(ventas_cat[!, col_cat])
         p = Plt.bar(
-            ventas_cat[!, col_cat], ventas_cat.Total;
-            orientation=:h,
+            etiq, ventas_cat.Total;
             title="Ingresos Totales por $col_cat",
-            xlabel="Ventas (\$)", ylabel=col_cat,
-            color=:steelblue, legend=false
+            xlabel=col_cat, ylabel="Ventas (\$)",
+            color=:steelblue, legend=false,
+            size=(1000, 500), xrotation=45,
+            bottom_margin=15Plt.mm
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "ventas_por_categoria.png"))
         @info "Guardado: ventas_por_categoria.png"
@@ -41,12 +44,19 @@ function ejecutar_graficacion(df::DataFrame)
     # 2. Perfil del cliente: nivel de ingreso y género
     if "Income" in names(df) && "Gender" in names(df)
         df_temp = dropmissing(df[!, ["Income", "Gender"]])
-        p = @df df_temp StatsPlots.groupedbar(
-            :Income;
-            group=:Gender,
+        counts = combine(groupby(df_temp, [:Income, :Gender]), nrow => :n)
+        income_levels = sort(unique(String.(counts[!, :Income])))
+        genders = sort(unique(String.(counts[!, :Gender])))
+        mat = [begin
+            row = filter(r -> String(r.Income) == inc && String(r.Gender) == gen, counts)
+            isempty(row) ? 0 : row[1, :n]
+        end for inc in income_levels, gen in genders]
+        p = StatsPlots.groupedbar(
+            income_levels, mat;
+            label=permutedims(genders),
             title="Perfil del Cliente: Nivel de Ingreso y Género",
             xlabel="Nivel de Ingreso", ylabel="Cantidad de Clientes",
-            palette=:muted
+            palette=:Set2
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "perfil_cliente_ingresos.png"))
         @info "Guardado: perfil_cliente_ingresos.png"
@@ -93,12 +103,13 @@ function ejecutar_graficacion(df::DataFrame)
         top5 = first(paises, 5)
         sort!(top5, :Total)
 
+        etiq_paises = string.(top5.Country)
         p = Plt.bar(
-            top5.Country, top5.Total;
-            orientation=:h,
+            etiq_paises, top5.Total;
             title="Top 5 Países con Mayor Facturación",
-            xlabel="Ventas Totales (\$)", ylabel="País",
-            color=:salmon, legend=false
+            xlabel="País", ylabel="Ventas Totales (\$)",
+            color=:salmon, legend=false,
+            size=(700, 500)
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "top_paises_ventas.png"))
         @info "Guardado: top_paises_ventas.png"

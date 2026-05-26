@@ -55,6 +55,15 @@ make transformacion
 make carga
 ```
 
+> En Windows, `make` no viene instalado por defecto. Si estás en PowerShell, usa directamente los comandos de Julia de abajo, o instala GNU Make y ejecútalo desde un entorno que lo incluya en el PATH.
+
+```bash
+julia --project=. src/pipeline/main.jl --modo completo
+julia --project=. src/pipeline/main.jl --modo ingesta
+julia --project=. src/pipeline/main.jl --modo transformacion
+julia --project=. src/pipeline/main.jl --modo carga
+```
+
 ### 3. Iniciar Dashboard
 
 ```bash

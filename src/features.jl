@@ -13,7 +13,10 @@ end
 # Convierte un valor a Date o devuelve missing si no es posible
 function _a_fecha(x)::Union{Date, Missing}
     ismissing(x) && return missing
-    v = tryparse(Date, string(x))
+    s = string(x)
+    v = tryparse(Date, s)
+    isnothing(v) || return v
+    v = tryparse(Date, s, dateformat"m/d/yyyy")
     isnothing(v) ? missing : v
 end
 
