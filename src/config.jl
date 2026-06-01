@@ -1,9 +1,25 @@
 module Config
 
-using Logging
+using Logging, DotEnv
 
 # Rutas base del proyecto (config.jl está en src/, la raíz está un nivel arriba)
 const RUTA_RAIZ = dirname(@__DIR__)
+
+function __init__()
+    env_path = joinpath(RUTA_RAIZ, ".env")
+    if isfile(env_path)
+        DotEnv.load!(env_path)
+        @info "Variables de entorno cargadas desde .env"
+    else
+        @warn "No se encontró archivo .env en $RUTA_RAIZ"
+    end
+end
+
+function kaggle_token()::String
+    token = get(ENV, "KAGGLE_API_TOKEN", "")
+    isempty(token) && error("KAGGLE_API_TOKEN no está definido en .env")
+    return token
+end
 
 # Directorios de datos
 const CARPETA_DATOS     = joinpath(RUTA_RAIZ, "data")

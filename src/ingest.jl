@@ -1,7 +1,7 @@
 module Ingest
 
-using HTTP, JSON3, ZipFile, Logging, Base64
-using ..Config: DATOS_BRUTOS
+using HTTP, ZipFile, Logging
+using ..Config: DATOS_BRUTOS, kaggle_token
 
 function descargar_datos(
     dataset_kaggle::String = "sahilprajapati143/retail-analysis-large-dataset",
@@ -11,16 +11,12 @@ function descargar_datos(
 
     mkpath(carpeta_destino)
 
-    # Leer credenciales de Kaggle desde ~/.kaggle/kaggle.json
-    kaggle_json = joinpath(homedir(), ".kaggle", "kaggle.json")
-    if !isfile(kaggle_json)
-        @error "No se encontró kaggle.json en ~/.kaggle/ — configure sus credenciales de Kaggle."
+    token = try
+        kaggle_token()
+    catch e
+        @error "No se pudo obtener el token de Kaggle: $e"
         return false
     end
-
-    credentials = JSON3.read(read(kaggle_json, String))
-    username = string(credentials[:username])
-    key      = string(credentials[:key])
     @info "Conexión con Kaggle exitosa."
 
     # Construir URL de descarga de la API de Kaggle
@@ -32,8 +28,7 @@ function descargar_datos(
     zip_path = joinpath(carpeta_destino, "$dataset.zip")
     @info "Bajando archivos..."
     try
-        token    = base64encode("$username:$key")
-        response = HTTP.get(url, ["Authorization" => "Basic $token"]; redirect=true)
+        response = HTTP.get(url, ["Authorization" => "Bearer $token"]; redirect=true)
         write(zip_path, response.body)
         @info "Archivo descargado: $(basename(zip_path))"
     catch e

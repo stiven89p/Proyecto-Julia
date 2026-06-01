@@ -9,11 +9,22 @@ using DataFrames, Dates, Statistics, Logging
 using ..Config: RUTA_GRAFICOS, NOMBRE_DB
 using ..Dataset: obtener_datos_db
 
-# Formatea un número como cadena de dinero
-function _formato_moneda(x::Number)::String
-    x >= 1_000_000 && return "\$$(round(x / 1e6, digits=1))M"
-    return "\$$(round(Int, x))"
+# Inserta puntos como separadores de miles en un entero
+function _miles(n::Integer)::String
+    neg = n < 0
+    s = string(abs(n))
+    len = length(s)
+    r = len % 3
+    groups = String[]
+    r > 0 && push!(groups, s[1:r])
+    for i in (r + 1):3:len
+        push!(groups, s[i:i+2])
+    end
+    return (neg ? "-" : "") * join(groups, ".")
 end
+
+_formato_moneda(x::Real)::String = "\$" * _miles(round(Int, x))
+_formato_entero(x::Real)::String = _miles(round(Int, x))
 
 function ejecutar_graficacion(df::DataFrame)
     mkpath(RUTA_GRAFICOS)
@@ -35,7 +46,8 @@ function ejecutar_graficacion(df::DataFrame)
             xlabel=col_cat, ylabel="Ventas (\$)",
             color=:steelblue, legend=false,
             size=(1000, 500), xrotation=45,
-            bottom_margin=15Plt.mm
+            bottom_margin=15Plt.mm,
+            yformatter=_formato_moneda
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "ventas_por_categoria.png"))
         @info "Guardado: ventas_por_categoria.png"
@@ -56,7 +68,8 @@ function ejecutar_graficacion(df::DataFrame)
             label=permutedims(genders),
             title="Perfil del Cliente: Nivel de Ingreso y Género",
             xlabel="Nivel de Ingreso", ylabel="Cantidad de Clientes",
-            palette=:Set2
+            palette=:Set2,
+            yformatter=_formato_entero
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "perfil_cliente_ingresos.png"))
         @info "Guardado: perfil_cliente_ingresos.png"
@@ -65,8 +78,13 @@ function ejecutar_graficacion(df::DataFrame)
     # 3. Distribución de métodos de pago (gráfico de torta)
     if "Payment_Method" in names(df)
         pagos = combine(groupby(dropmissing(df[!, ["Payment_Method"]]), :Payment_Method), nrow => :n)
+        total_pagos = sum(pagos.n)
+        etiq_pagos = [
+            "$(String(r.Payment_Method)) ($(round(100 * r.n / total_pagos, digits=1))%)"
+            for r in eachrow(pagos)
+        ]
         p = Plt.pie(
-            pagos.Payment_Method, pagos.n;
+            etiq_pagos, pagos.n;
             title="Distribución de Métodos de Pago"
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "preferencia_metodos_pago.png"))
@@ -89,7 +107,8 @@ function ejecutar_graficacion(df::DataFrame)
             marker=:circle, color=:forestgreen, linewidth=2,
             title="Tendencia Histórica de Ventas Mensuales",
             xlabel="Mes", ylabel="Ventas Totales (\$)",
-            legend=false, grid=true
+            legend=false, grid=true,
+            yformatter=_formato_moneda
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "tendencia_mensual_ventas.png"))
         @info "Guardado: tendencia_mensual_ventas.png"
@@ -109,7 +128,8 @@ function ejecutar_graficacion(df::DataFrame)
             title="Top 5 Países con Mayor Facturación",
             xlabel="País", ylabel="Ventas Totales (\$)",
             color=:salmon, legend=false,
-            size=(700, 500)
+            size=(700, 500),
+            yformatter=_formato_moneda
         )
         Plt.savefig(p, joinpath(RUTA_GRAFICOS, "top_paises_ventas.png"))
         @info "Guardado: top_paises_ventas.png"

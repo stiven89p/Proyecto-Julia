@@ -24,7 +24,7 @@ function parsear_argumentos()
 
     @add_arg_table! s begin
         "--modo"
-            help    = "Fase del pipeline: completo | ingesta | transformacion | carga"
+            help    = "Fase del pipeline: completo | ingesta | transformacion | carga | dashboard"
             default = "completo"
         "--dataset-id"
             help    = "ID del dataset de Kaggle"
@@ -45,10 +45,19 @@ function orquestar_pipeline()
     dataset_id = args["dataset-id"]
     bd_ventas  = args["bd-ventas"]
 
-    modos_validos = ["completo", "ingesta", "transformacion", "carga"]
+    modos_validos = ["completo", "ingesta", "transformacion", "carga", "dashboard"]
     if !(modo in modos_validos)
         @error "Modo inválido: '$modo'. Use uno de: $(join(modos_validos, ", "))"
         exit(1)
+    end
+
+    # ── Dashboard ────────────────────────────────────────────────────────────
+    if modo == "dashboard"
+        dashboard_py = joinpath(@__DIR__, "..", "..", "dashboard.py")
+        streamlit    = expanduser("~/.pyenv/versions/3.13.5/bin/streamlit")
+        @info "Iniciando dashboard Streamlit..."
+        run(`$streamlit run $dashboard_py`)
+        return
     end
 
     archivo_csv_procesado = joinpath(DATOS_PROCESADOS, "processed_data.csv")
