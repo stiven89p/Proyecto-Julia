@@ -1,86 +1,74 @@
 # SaleSight — Reporte Ejecutivo
 
-**Cliente:** Firma de Retail Global  
-**Periodo analizado:** Enero 2023 – Diciembre 2024  
-**Preparado por:** Stiven Posada Casadiego y Josué Ribero Duarte  
-**Equipo:** SaleSight Consultoría de Datos  
+**Cliente:** Firma de Retail Global
+**Periodo analizado:** Enero 2023 – Diciembre 2024
+**Preparado por:** Stiven Posada Casadiego y Josue Ribero Duarte — SaleSight Consultoria de Datos
 
 ---
 
-## ¿Qué analizamos?
+## Que analizamos
 
-Procesamos **302,010 transacciones de ventas** distribuidas en 5 países (Australia, Canada, Germany, UK y USA) y 5 categorías de producto (Books, Clothing, Electronics, Grocery y Home Decor). Los datos estaban en excelente estado: más del 99% de los registros se conservaron tras la limpieza.
-
----
-
-## ¿Qué encontramos?
-
-### 1. Su negocio es más simple de lo que parece
-
-Aunque el dataset registra 30 variables por transacción, **solo 4 de ellas concentran el 98.7% de toda la variación** del negocio. La variable más importante es el **monto total de la transacción** (`Total_Amount`), seguida de la edad del cliente y la cantidad de artículos comprados. Esto significa que con un tablero de 4 métricas bien elegidas puede monitorear prácticamente todo lo que ocurre en su negocio.
-
-### 2. El ticket promedio es estable entre segmentos
-
-El monto promedio por transacción ronda los **$1,367 USD** en todos los segmentos:
-- Clientes **New**: $1,368 promedio
-- Clientes **Premium**: $1,363 promedio
-- Clientes **Regular**: $1,369 promedio
-
-La diferencia entre el segmento Premium y Regular es de apenas **$5.87 USD** y la prueba estadística confirma que esa diferencia **no es significativa** (p-valor = 0.271). En la práctica, los tres segmentos gastan lo mismo por transacción.
-
-> **Implicación:** La segmentación actual no está capturando diferencias reales de comportamiento de gasto. Considere enriquecer los criterios de segmentación con frecuencia de compra o valor de vida del cliente (LTV).
-
-### 3. Las calificaciones numéricas son un indicador confiable de satisfacción
-
-La regla `calificación ≥ 4 estrella → cliente satisfecho` predice correctamente la satisfacción real (basada en comentarios escritos) en el **84.2% de los casos**, con un F1-Score de 0.862.
-
-> **Implicación:** Puede implementar este indicador automático en su tablero de control para monitorear satisfacción en tiempo real, sin necesidad de revisar comentarios de texto individualmente.
-
-### 4. La red comercial tiene puntos de fallo críticos
-
-Su red comercial (países × categorías de producto) tiene **25 conexiones activas** y está completamente interconectada. Sin embargo, los mercados de **Australia, Canada y Germany** concentran el mayor número de conexiones: si los tres fallan simultáneamente, el **60% de las relaciones comerciales** de la red quedan afectadas.
+Procesamos **302,010 transacciones de ventas** de una firma de retail global con presencia en 5 paises (Australia, Canada, Germany, UK y USA) y 5 categorias de producto (Books, Clothing, Electronics, Grocery y Home Decor). Los datos estaban en muy buen estado: mas del 99.85% de los registros se conservaron tras la limpieza.
 
 ---
 
-## ¿Qué recomendamos?
+## Seccion 1 — Adquisicion y Preparacion
 
-| Prioridad | Acción | Base del hallazgo |
-|:---:|---|---|
-| **Alta** | Desarrollar criterios de segmentación más robustos (frecuencia, LTV, canal) | Los 3 segmentos actuales tienen gasto idéntico |
-| **Alta** | Implementar plan de contingencia para Australia, Canada y Germany | Nodos críticos de la red — 60% de impacto acumulado |
-| **Media** | Activar monitoreo automático de satisfacción con `Ratings ≥ 4` | Exactitud del 84.2% como indicador de satisfacción |
-| **Media** | Simplificar el sistema de reportes a 4 métricas clave | El 98.7% de la variación se explica con 4 componentes |
-| **Baja** | Explorar oportunidades de especialización por país y categoría | La red actual es homogénea — no hay diferenciación geográfica |
+El dataset fue descargado desde Kaggle usando la API oficial y cargado con `CSV.read` en Julia, que detecta automaticamente el tipo de cada columna. Encontramos que menos del **0.15%** de los registros tenia datos incompletos en columnas criticas como el monto o la fecha. Esos valores faltantes se completaron usando el valor del medio de cada categoria de producto para no distorsionar los promedios. El dataset limpio se exporto en dos formatos: `.csv` para compartir con el cliente y `.jld2` para uso interno.
+
+**Mensaje al cliente:** Su dataset tiene 302,010 registros y 30 variables. La calidad de los datos es alta y no fue necesario eliminar registros significativos. Las decisiones de limpieza estan documentadas paso a paso en el notebook.
 
 ---
 
-## Visualizaciones de referencia
+## Seccion 2 — Variables clave del negocio
 
-### 1. Distribución del monto por transacción
-*Sección 3.2 del notebook — Análisis estadístico*
+Aunque el dataset registra 30 variables por transaccion, aplicamos un analisis matematico para identificar cuales son realmente importantes. El resultado: con solo **4 variables numericas** se explica el **98.7% de toda la variacion** en los datos. La variable mas determinante es el monto total de la transaccion, seguida de la cantidad de articulos y el precio unitario.
 
-![Distribución del monto por transacción](reports/images/distribucion_monto.png)
+Tambien analizamos la relacion entre paises y categorias de producto. La tabla muestra que todos los mercados tienen actividad en todas las categorias, lo que indica una red comercial completamente conectada pero sin diferenciacion geografica.
 
-Los montos de compra siguen un patrón predecible centrado en **$1,367 USD**. La curva azul (distribución real) coincide con el ajuste teórico (línea punteada naranja), lo que confirma que el comportamiento de gasto es uniforme y estable.
+**Mensaje al cliente:** No necesita monitorear 30 metricas. Con 4 indicadores bien elegidos puede controlar el 98.7% de lo que ocurre en su negocio.
 
 ---
 
-### 2. Gasto por segmento de cliente
-*Sección 3.4 del notebook — Comparación entre grupos*
+## Seccion 3 — Hallazgos estadisticos
+
+### Distribucion del monto por transaccion
+
+![Distribucion del monto por transaccion](reports/images/distribucion_monto.png)
+
+La mayoria de las transacciones se ubica entre **$200 y $2,500 USD**, con un promedio de **$1,367 USD**. El comportamiento de gasto es predecible y simetrico, lo que facilita el presupuesto y la proyeccion de ingresos.
+
+### Gasto por segmento de cliente
 
 ![Monto por segmento de cliente](reports/images/boxplot_segmentos.png)
 
-Los tres segmentos (New, Premium y Regular) presentan distribuciones prácticamente idénticas. Las cajas se superponen completamente, evidenciando que el programa de segmentación actual no diferencia el comportamiento de gasto real entre clientes.
+Los tres segmentos (New, Premium y Regular) presentan distribuciones de gasto casi identicas. La diferencia entre Premium y Regular es de apenas **$5.87 USD por transaccion** — estadisticamente insignificante (p-valor = 0.271). La segmentacion actual no capta diferencias reales de comportamiento.
+
+**Hallazgo adicional:** La regla automatica "calificacion de 4 o mas estrellas = cliente satisfecho" predice correctamente la satisfaccion real en el **84.2% de los casos**. Esto es suficiente para un sistema de alerta temprana sin revision manual de comentarios.
 
 ---
 
-### 3. Red comercial País × Categoría
-*Sección 4.5 del notebook — Análisis de red*
+## Seccion 4 — Red comercial y puntos de fallo
 
-![Red comercial País × Categoría](reports/images/red_comercial.png)
+### Red comercial Pais x Categoria
 
-Los nodos azules representan mercados geográficos y los naranjas representan categorías de producto. El tamaño de cada nodo es proporcional a sus conexiones activas. Los mercados de mayor tamaño (Australia, Canada, Germany) son los puntos críticos cuya falla afectaría el 60% de la red.
+![Red comercial Pais x Categoria](reports/images/red_comercial.png)
+
+La red tiene **10 nodos** (5 paises y 5 categorias) con **25 conexiones activas**. Esta completamente interconectada: todos los mercados venden todas las categorias. Sin embargo, **Australia, Canada y Germany** concentran el mayor volumen de operaciones. Si estos tres mercados fallan simultaneamente, el **60% de las relaciones comerciales** de la red queda afectado.
 
 ---
 
-*Reporte generado por SaleSight · Consultoría de Datos*
+## Que recomendamos
+
+| Prioridad | Accion | Base del hallazgo |
+|:---:|---|---|
+| Alta | Redefinir la segmentacion de clientes con criterios de frecuencia de compra, valor de vida (LTV) o canal | Los 3 segmentos actuales tienen gasto identico por transaccion |
+| Alta | Crear planes de contingencia para Australia, Canada y Germany | Su falla simultanea impacta el 60% de las operaciones |
+| Media | Activar monitoreo automatico de satisfaccion con la regla Ratings >= 4 | Exactitud del 84.2% — viable para alertas en tiempo real |
+| Media | Simplificar el sistema de reportes interno a 4 metricas clave | El 98.7% de la variacion se explica con 4 componentes |
+| Baja | Explorar especializacion de oferta por pais y categoria | La red es homogenea — no hay diferenciacion geografica actualmente |
+
+---
+
+*Reporte generado por SaleSight — Consultoria de Datos*
+*Stiven Posada Casadiego y Josue Ribero Duarte — 2025*
