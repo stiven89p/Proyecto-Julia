@@ -2,7 +2,7 @@
 
 **Cliente:** Firma de Retail Global  
 **Periodo analizado:** Enero 2023 – Diciembre 2024  
-**Preparado por:** Stiven Posada Casadiego · Josué Ribero Duarte  
+**Preparado por:** Stiven Posada Casadiego y Josué Ribero Duarte  
 **Equipo:** SaleSight Consultoría de Datos  
 
 ---

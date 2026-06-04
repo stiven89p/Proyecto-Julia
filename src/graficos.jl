@@ -1,5 +1,4 @@
 module Graficos
-
 # Módulo de visualización (equivalente a plots.py)
 # Se llama Graficos para no colisionar con el paquete Plots.jl
 

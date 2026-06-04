@@ -1,5 +1,4 @@
 module Config
-
 using Logging, DotEnv
 
 # Rutas base del proyecto (config.jl está en src/, la raíz está un nivel arriba)

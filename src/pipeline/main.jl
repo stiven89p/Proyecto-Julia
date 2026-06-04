@@ -1,7 +1,6 @@
 #!/usr/bin/env julia
 # Orquestador ETL — equivalente a salesight/pipeline/main.py
 # Uso: julia --project=../.. src/pipeline/main.jl --modo completo
-
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "..", ".."))
 

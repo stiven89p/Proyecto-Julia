@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos de CSS para mejorar el diseño
+# Estilos de CSS
 st.markdown("""
     <style>
         .main {
